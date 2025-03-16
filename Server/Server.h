@@ -1,60 +1,47 @@
 #pragma once
 #include <QTcpServer>
 #include <QTcpSocket>
-#include <QtWidgets/QWidget>
 #include <qdebug.h>
 #include <algorithm>
 #include <random>
-#include <qtimer.h>
+#include <qvector.h>
+#include <qqueue.h>
 #include "ui_Server.h"
+#include "ClientHandle.h"
 
-// 信号类型
-enum class MYSIGNAL
-{
-    ADD = 0,         // 增加玩家
-    START = 1,       // 游戏开始
-    END = 2,         // 房间解散 
-    BEGIN = 3,       // 回合开始
-    MOVE = 4,        // 当前回合玩家向前移动 
-    BUY_COUNTRY = 5, // 购买地皮
-    BUY_HOUSE = 6,   // 购买房子
-    GIVE_TOLL = 7,   // 缴纳过路费
-    SELL = 8,        // 卖房子
-    MORT = 9,        // 抵押房子
-    BUY_BACK = 10,   // 买回房子
-    PASS = 11,       // 该回合玩家结束
-    OUT = 12,        // 破产
-    GIVE_UP = 13,    // 认输  
-    OVER = 14        // 游戏结束
-};
-
-class Server : public QWidget
+class Server : public QObject
 {
     Q_OBJECT
 
 public:
-    Server(QWidget *parent = nullptr);
+    Server();
     ~Server();
 
 private:
-    int cur_players;
-    int m_players;
     QTcpServer* pServer = nullptr;
-    std::vector<QTcpSocket*> vClients;
-    std::vector<int> vIsCon;
-    
-    int currentId;
+    int sendNumber = 0;               // 全局序列号
+    QQueue<GameMessage> rcvdMsgQueue; // 接收消息
+
+    QMutex m_mutex;
+    int m_totalplayers;    // 玩家总数
+    int m_curplayer;       // 当前回合玩家
+    int m_players;         // 当前玩家总数
+    QSet<int> m_stopSet;   // 暂停行动的玩家
+    QVector<int> vIsCon;   // 是否在线
+    QVector<ClientHandle*> vClients;
 
 private:
-    void listenClients();
-    void sendToClients(const QByteArray& data);
-    void writeData(MYSIGNAL signal, int pos);
-
-    void shuffleSeats();
-    int randomStep();
+    void listenClients();     // 监听客户端
+    void shuffleSeats();      // 打乱座次
+    int randomStep(int mod);  // 随机步数
     
+    void sendToOneClient(const GameMessage& gameMsg);    // 单播
+    void sendToAllClients(const GameMessage& gameMsg);   // 广播
+
 private slots:
-    void readData();
-    void stopServer();
+    void enqueueMessage(const GameMessage& gameMsg);
+    void processMessages();
+    void connectedFailed();
     void clientDisconnected();
+    void stopServer();
 };
