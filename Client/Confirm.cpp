@@ -23,7 +23,7 @@ void CConfirm::InitWindow()
     font.setPointSize(15);
     font.setBold(true);
     if (m_type == 1) {
-        pName = new QLabel(COMFIRM_TYPE1);
+        pName = new QLabel("余额不足!");
     }
     pName->setFont(font);
     pName->setAlignment(Qt::AlignCenter);

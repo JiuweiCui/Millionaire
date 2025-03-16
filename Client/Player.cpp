@@ -1,130 +1,116 @@
 #include "Player.h"
 
-CInfo::CInfo(int money, VINT vId, QWidget* parent)
-    : nMoney(money),
-    vHouseId(vId),
-    QWidget(parent)
-{
-    initWindow();
-}
+QVector<CPlayers*> CPlayers::vPlayersptr;
 
-CInfo::~CInfo()
-{
-    FREE_PTR(pLayout);
-}
-
-void CInfo::initWindow()
-{
-    pLayout = new QGridLayout;
-    QLabel* pMoney = new QLabel(REST_MONEY + QString::number(nMoney));
-    pLayout->addWidget(pMoney);
-
-    /*
-    for (int nId : vHouseId) {
-        // 待实现
-    }
-    */
-
-    setLayout(pLayout);
-}
-
-
-
-CPlayers::CPlayers(int my_id_, int your_id_, int money, QWidget* parent)
-    : my_id(my_id_),
-    your_id(your_id_),
-    m_restMoney(money),
-    QFrame(parent)
+CPlayers::CPlayers(int id_, int init_money, QObject* parent)
+    : m_id(id_),
+    m_restMoney(init_money),
+    QObject(parent)
 {
     initWindow();
 }
 
 CPlayers::~CPlayers()
 {
-    FREE_PTR(pPlayerId);
-    FREE_PTR(pInfo);
-    FREE_PTR(pMoney);
+    FREE_PTR(playerIdptr);
+    FREE_PTR(restMoneyTextptr);
+    FREE_PTR(restMoneyptr);
+    FREE_PTR(layoutptr);
+    FREE_PTR(frameptr);
 }
 
 void CPlayers::initWindow()
 {
     QFont font;
-    font.setFamily("楷体");
-    font.setPointSize(12);
+    font.setFamily(CPLAYERS_CHN_FAMILY);
+    font.setPointSize(CPLAYERS_CHN_SIZE);
     font.setBold(true);
 
-    pLayout = new QGridLayout;
-    pPlayerId = new QLabel("玩家" + QString::number(your_id + 1));
-    pPlayerId->setAlignment(Qt::AlignCenter);
-    pPlayerId->setFont(font);
+    playerIdptr = new QLabel("玩家" + QString::number(m_id + 1));
+    playerIdptr->setAlignment(Qt::AlignCenter);
+    playerIdptr->setFont(font);
     
-    pText = new QLabel("余额");
-    pText->setAlignment(Qt::AlignCenter);
-    pText->setFont(font);
+    restMoneyTextptr = new QLabel("余额");
+    restMoneyTextptr->setAlignment(Qt::AlignCenter);
+    restMoneyTextptr->setFont(font);
 
-    font.setFamily("Times New Roman");
-    pMoney = new QLabel(QString::number(m_restMoney));
-    pMoney->setAlignment(Qt::AlignCenter);
-    pMoney->setFont(font);
+    font.setFamily(CPLAYERS_ENG_FAMILY);
+    font.setPointSize(CPLAYERS_ENG_SIZE);
+    restMoneyptr = new QLabel(QString::number(m_restMoney));
+    restMoneyptr->setAlignment(Qt::AlignCenter);
+    restMoneyptr->setFont(font);
 
-    pLayout->addWidget(pPlayerId, 0, 0);
-    pLayout->addWidget(pText, 1, 0);
-    pLayout->addWidget(pMoney, 2, 0);
+    layoutptr = new QGridLayout;
+    layoutptr->addWidget(playerIdptr, 0, 0);
+    layoutptr->addWidget(restMoneyTextptr, 1, 0);
+    layoutptr->addWidget(restMoneyptr, 2, 0);
 
-    setLayout(pLayout);
-    QString style =
-        "CPlayers { "
-            "border: 1px solid black; "
-            "border-radius: 5px; "
-            "background-color: #E6E6E6;"
-        "}";
-    setStyleSheet(style);
+    frameptr = new QFrame;
+    frameptr->setLayout(layoutptr);
+    frameptr->setStyleSheet(CPLAYERS_STYLE);
 }
 
-int CPlayers::getMoney() const
+QWidget* CPlayers::getWidget() const
+{
+    return frameptr;
+}
+
+int CPlayers::getRestMoney() const
 {
     return m_restMoney;
+}
+
+int CPlayers::getAllMoney() const
+{
+    int sumMoney = m_restMoney;
+    for (int house_id : houseSet) {
+        CGrid* gridptr = CGrid::vGridptr[house_id];
+        if (!gridptr->getMortStatus()) {
+            sumMoney += gridptr->getGroundPrice() / 2;
+            sumMoney += gridptr->getHousePrice() * gridptr->getHouses() / 2;
+        }
+    }
+
+    return sumMoney;
+}
+
+int CPlayers::getHouses() const
+{
+    int sumHouses = 0;
+    for (int house_id : houseSet) {
+        CGrid* gridptr = CGrid::vGridptr[house_id];
+        sumHouses += gridptr->getHouses();
+    }
+
+    return sumHouses;
 }
 
 void CPlayers::addMoney(const int& money)
 {
     m_restMoney += money;
-    pMoney->setText(QString::number(m_restMoney));
+    restMoneyptr->setText(QString::number(m_restMoney));
 }
 
 void CPlayers::subMoney(const int& money)
 {
     m_restMoney -= money;
-    pMoney->setText(QString::number(m_restMoney));
+    restMoneyptr->setText(QString::number(m_restMoney));
 }
 
-void CPlayers::addHouse(const int& id)
+void CPlayers::addHouse(const int& house_id)
 {
-    vHouseId.push_back(id);
+    houseSet.insert(house_id);
+}
+
+void CPlayers::subHouse(const int& house_id)
+{
+    houseSet.remove(house_id);
 }
 
 void CPlayers::setOut()
 {
-    QString style =
-        "CPlayers { "
-        "border: 1px solid black; "
-        "border-radius: 5px; "
-        "background-color: gray;"
-        "}";
-    setStyleSheet(style);
-}
-
-void CPlayers::showInfo()
-{
-    VINT vHouseId;
-    for (int x : vHouseId) {
-        vHouseId.push_back(x);
-    }
-
-    if (pInfo) {
-        FREE_PTR(pInfo);
-    }
-
-    pInfo = new CInfo(m_restMoney, vHouseId);
-    pInfo->show();
+    houseSet.clear();
+    m_restMoney = 0;
+    restMoneyptr->setText(QString::number(m_restMoney));
+    frameptr->setStyleSheet(CPLAYERS_OUT_STYLE);
 }

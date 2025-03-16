@@ -5,11 +5,13 @@
 
 int main(int argc, char* argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
     Client client("127.0.0.1", 1234);
-    client.show();
-    //client.showMaximized();
+    if (client.initConnect()) {
+        client.show();
+        app.exec();
+    }
 
-    return a.exec();
+    return 0;
 }

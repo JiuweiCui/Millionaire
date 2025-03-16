@@ -1,172 +1,159 @@
 #include "Timer.h"
 
 
-CTimer::CTimer(int time, QWidget* parent)
-    : m_time(time),
-    QFrame(parent)
+CTimer::CTimer(QObject* parent)
+    : QObject(parent)
 {
-    m_rest_time = m_time;
-
     initWindow();
+}
+
+CTimer* CTimer::getInstance()
+{
+    static CTimer timeptr;
+    return &timeptr;
 }
 
 CTimer::~CTimer()
 {
-    pTime->stop();
-    FREE_PTR(pTime);
-    FREE_PTR(pText);
-    FREE_PTR(pNum);
-    FREE_PTR(pPassBtn);
-    FREE_PTR(pLayout);
+    timerptr->stop();
+    FREE_PTR(timerptr);
+    FREE_PTR(textptr);
+    FREE_PTR(restTimeptr);
+    FREE_PTR(passBtnptr);
+    FREE_PTR(layoutptr);
+    FREE_PTR(frameptr);
 }
 
 void CTimer::initWindow()
 {
+    m_restTime = MAX_OP_TIME;
     QFont font;
-    font.setFamily("楷体");
-    font.setPointSize(15);
+    font.setFamily(CTIMER_CHN_FAMILY);
+    font.setPointSize(CTIMER_CHN_SIZE);
     font.setBold(true);
 
-    pText = new QLabel(REST_TIME_TO_GO);
-    pText->setAlignment(Qt::AlignCenter);
-    pText->setFont(font);
+    textptr = new QLabel("回合剩余时间");
+    textptr->setAlignment(Qt::AlignCenter);
+    textptr->setFont(font);
 
-    font.setFamily("Times New Roman");
-    pNum = new QLabel("");
-    pNum->setAlignment(Qt::AlignCenter);
-    pNum->setFont(font);
+    font.setFamily(CTIMER_ENG_FAMILY);
+    restTimeptr = new QLabel("0");
+    restTimeptr->setAlignment(Qt::AlignCenter);
+    restTimeptr->setFont(font);
 
-    pPassBtn = new QPushButton("PASS");
-    pPassBtn->setFont(font);
-    pPassBtn->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #FF8F00;"
-        "    border: none;"
-        "    border-radius: 25px;"
-        "    width: 50px;"
-        "    height: 50px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #E64A19;"
-        "}");
+    passBtnptr = new QPushButton("PASS");
+    passBtnptr->setFont(font);
+    passBtnptr->setStyleSheet(CTIMER_BUTTON_STYLE);
 
-    connect(pPassBtn, &QPushButton::clicked, [&]() {
-        pTime->stop();
+    connect(passBtnptr, &QPushButton::clicked, [&]() {
+        timerptr->stop();
         emit stopSignal(MYSIGNAL::PASS);
     });
 
-    pLayout = new QGridLayout;
-    pLayout->addWidget(pText, 0, 0,1, 4);
-    pLayout->addWidget(pNum, 1, 0, 1, 4);
-    pLayout->addWidget(pPassBtn, 2, 1, 2, 2);
+    layoutptr = new QGridLayout;
+    layoutptr->addWidget(textptr, 0, 0,1, 4);
+    layoutptr->addWidget(restTimeptr, 1, 0, 1, 4);
+    layoutptr->addWidget(passBtnptr, 2, 1, 2, 2);
 
-    pTime = new QTimer;
-    pTime->setInterval(1000);
-    connect(pTime, &QTimer::timeout, [&]() {
-        pNum->setText(QString::number(m_rest_time--));
-        if (m_rest_time == -1) {
-            emit stopSignal(MYSIGNAL::PASS);
+    timerptr = new QTimer;
+    timerptr->setInterval(1000);
+    connect(timerptr, &QTimer::timeout, [&]() {
+        restTimeptr->setText(QString::number(m_restTime--));
+        if (m_restTime == -1) {
+            timerptr->stop();
+            emit stopSignal(MYSIGNAL::OUT3);
         }
     });
 
-    setLayout(pLayout);
-    /*
-    QString style =
-        "CTimer { "
-        "    border: none; "
-        "    border-radius: 10px; "
-        "    background-color: #FFECB3;"
-        "}";
-        */
-    QString style = "CTimer {border: 1px solid #E64A19; border-radius: 10px}";
-    setStyleSheet(style);
+    frameptr = new QFrame;
+    frameptr->setLayout(layoutptr);
+    frameptr->setStyleSheet(CTIMER_STYLE);
+}
+
+QWidget* CTimer::getWidget() const
+{
+    return frameptr;
 }
 
 void CTimer::start()
 {
-    m_rest_time = m_time;
-    pPassBtn->setEnabled(false);
-    pTime->start();
+    m_restTime = MAX_OP_TIME;
+    passBtnptr->setEnabled(false);
+    timerptr->start();
 }
 
 void CTimer::setEnabled(bool flg)
 {
-    pPassBtn->setEnabled(flg);
+    passBtnptr->setEnabled(flg);
 }
 
-CDice::CDice(QWidget* parent)
-    : QFrame(parent)
+CDice::CDice(QObject* parent)
+    : QObject(parent)
 {
     initWindow();
 }
 
+CDice* CDice::getInstance()
+{
+    static CDice diceptr;
+    return &diceptr;
+}
+
 CDice::~CDice()
 {
-    FREE_PTR(pText);
-    FREE_PTR(pNum);
-    FREE_PTR(pRollBtn);
+    FREE_PTR(textptr);
+    FREE_PTR(numptr);
+    FREE_PTR(rollBtnptr);
+    FREE_PTR(layoutptr);
+    FREE_PTR(frameptr);
 }
 
 void CDice::initWindow()
 {
     QFont font;
-    font.setFamily("楷体");
-    font.setPointSize(15);
+    font.setFamily(CTIMER_CHN_FAMILY);
+    font.setPointSize(CTIMER_CHN_SIZE);
     font.setBold(true);
 
-    pText = new QLabel(CUR_DICE_SHOW);
-    pText->setAlignment(Qt::AlignCenter);
-    pText->setFont(font);
+    textptr = new QLabel("骰子点数");
+    textptr->setAlignment(Qt::AlignCenter);
+    textptr->setFont(font);
     
-    pRollBtn = new QPushButton("掷骰子!");
-    pRollBtn->setFont(font);
-    pRollBtn->setStyleSheet(
-        "QPushButton {"
-        "    background-color: #FF8F00;"
-        "    border: none;"
-        "    border-radius: 25px;"
-        "    width: 50px;"
-        "    height: 50px;"
-        "}"
-        "QPushButton:hover {"
-        "    background-color: #E64A19;"
-        "}");
-    connect(pRollBtn, &QPushButton::clicked, [&]() {
-        pRollBtn->setEnabled(false);
+    rollBtnptr = new QPushButton("掷骰子!");
+    rollBtnptr->setFont(font);
+    rollBtnptr->setStyleSheet(CTIMER_BUTTON_STYLE);
+    connect(rollBtnptr, &QPushButton::clicked, [&]() {
+        rollBtnptr->setEnabled(false);
         emit haveMoveSignal(MYSIGNAL::MOVE);
     });
 
-    font.setFamily("Times New Roman");
-    pNum = new QLabel("0");
-    pNum->setAlignment(Qt::AlignCenter);
-    pNum->setFont(font);
+    font.setFamily(CTIMER_ENG_FAMILY);
+    numptr = new QLabel("0");
+    numptr->setAlignment(Qt::AlignCenter);
+    numptr->setFont(font);
 
-    pLayout = new QGridLayout;
-    pLayout->addWidget(pText, 0, 0, 1, 4);
-    pLayout->addWidget(pNum, 1, 0, 1, 4);
-    pLayout->addWidget(pRollBtn, 2, 1, 2, 2);
-    setLayout(pLayout);
+    layoutptr = new QGridLayout;
+    layoutptr->addWidget(textptr, 0, 0, 1, 4);
+    layoutptr->addWidget(numptr, 1, 0, 1, 4);
+    layoutptr->addWidget(rollBtnptr, 2, 1, 2, 2);
 
-    setLayout(pLayout);
-    /*
-    QString style =
-        "CDice { "
-        "border: none; "
-        "border-radius: 10px; "
-        "background-color: #FFECB3;"
-        "}";
-    */
-    QString style = "CDice {border: 1px solid #E64A19; border-radius: 10px}";
-    setStyleSheet(style);
+    frameptr = new QFrame;
+    frameptr->setLayout(layoutptr);
+    frameptr->setStyleSheet(CTIMER_STYLE);
+}
+
+QWidget* CDice::getWidget() const
+{
+    return frameptr;
 }
 
 void CDice::setRoll(bool flg)
 {
-    pRollBtn->setEnabled(flg);
+    rollBtnptr->setEnabled(flg);
 }
 
 void CDice::setStep(int step)
 {
-    pNum->setText(QString::number(step));
+    numptr->setText(QString::number(step));
 }
 

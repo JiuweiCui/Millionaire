@@ -1,161 +1,173 @@
 #include "InfoArea.h"
 
-CShowArea::CShowArea(QWidget* parent)
-    : QFrame(parent)
+CShowArea::CShowArea(QObject* parent)
+    : QObject(parent)
 {
     initWindow();
 }
 
+CShowArea* CShowArea::getInstance()
+{
+    static CShowArea showArea;
+    return &showArea;
+}
+
 CShowArea::~CShowArea()
 {
-    FREE_PTR(pConst);
-    FREE_PTR(pText);
-    FREE_PTR(pLayout);
+    FREE_PTR(textptr);
+    FREE_PTR(contentptr);
+    FREE_PTR(layoutptr);
+    FREE_PTR(frameptr);
 }
 
 void CShowArea::initWindow()
 {
     QFont font;
-    font.setFamily("STENCIL");
-    font.setPointSize(16);
+    font.setFamily(CSHOWAREA_ENG_FAMILY);
+    font.setPointSize(CSHOWAREA_ENG_SIZE);
     font.setBold(true);
-    pConst = new QLabel("Game information");
-    pConst->setAlignment(Qt::AlignCenter);
-    pConst->setFont(font);
-
-    font.setFamily("楷体");
-    font.setPointSize(14);
-    font.setBold(false);
-    pText = new QLabel("--------------\n--------------");
-    pText->setAlignment(Qt::AlignCenter);
-    pText->setFont(font);
-
-    pLayout = new QGridLayout;
-    pLayout->addWidget(pConst, 0, 0, 1, 1);
-    pLayout->addWidget(pText, 1, 0, 2, 1);
-
-    setLayout(pLayout);
     
-    /*
-    QString style =
-        "CShowArea { "
-        "    border: none; "
-        "    border-radius: 10px; "
-        "    background-color: #FFECB3;"
-        "}";
-    */
-    QString style = "CShowArea {border: 1px solid #E64A19; border-radius: 10px}";
-    setStyleSheet(style);
+    textptr = new QLabel("Game information");
+    textptr->setAlignment(Qt::AlignCenter);
+    textptr->setFont(font);
+
+    font.setFamily(CSHOWAREA_CHN_FAMILY);
+    font.setPointSize(CSHOWAREA_CHN_SIZE);
+    font.setBold(false);
+    contentptr = new QLabel("--------------\n--------------");
+    contentptr->setAlignment(Qt::AlignCenter);
+    contentptr->setFont(font);
+
+    layoutptr = new QGridLayout;
+    layoutptr->addWidget(textptr, 0, 0, 1, 1);
+    layoutptr->addWidget(contentptr, 1, 0, 2, 1);
+
+    frameptr = new QFrame;
+    frameptr->setLayout(layoutptr);
+    frameptr->setStyleSheet(CSHOWAREA_STYLE);
+}
+
+QWidget* CShowArea::getWidget() const
+{
+    return frameptr;
 }
 
 void CShowArea::showInfo(const QString& str)
 {
-    pText->setText(str);
+    contentptr->setText(str);
 }
 
-CInfoArea::CInfoArea(QWidget* parent)
-	: QFrame(parent)
+
+
+CInfoArea::CInfoArea(QObject* parent)
+	: QObject(parent)
 {
     initWindow();
 }
 
+CInfoArea* CInfoArea::getInstance()
+{
+    static CInfoArea infoAreaptr;
+    return &infoAreaptr;
+}
+
 CInfoArea::~CInfoArea()
 {
-    FREE_PTR(pText);
-    FREE_PTR(pLabel);
-    FREE_PTR(pOkBtn);
-    FREE_PTR(pCelBtn);
-    FREE_PTR(pLayout);
+    FREE_PTR(textptr);
+    FREE_PTR(contentptr);
+    FREE_PTR(okBtnptr);
+    FREE_PTR(celBtnptr);
+    FREE_PTR(layoutptr);
+    FREE_PTR(frameptr);
 }
 
 void CInfoArea::initWindow()
 {
     QFont font;
-    font.setFamily("STENCIL");
-    font.setPointSize(15);
+    font.setFamily(CINFOAREA_ENG_FAMILY);
+    font.setPointSize(CINFOAREA_ENG_SIZE);
     font.setBold(true);
 
-    pText = new QLabel("CONFIRM INFORMATION");
-    pText->setAlignment(Qt::AlignCenter);
-    pText->setFont(font);
+    textptr = new QLabel("CONFIRM INFORMATION");
+    textptr->setAlignment(Qt::AlignCenter);
+    textptr->setFont(font);
 
-    font.setFamily("楷体");
-    font.setPointSize(12);
-    pLabel = new QLabel("");
-    pLabel->setAlignment(Qt::AlignCenter);
-    pLabel->setFont(font);
+    font.setFamily(CINFOAREA_CHN_FAMILY);
+    font.setPointSize(CINFOAREA_CHN_SIZE);
+    contentptr = new QLabel("");
+    contentptr->setAlignment(Qt::AlignCenter);
+    contentptr->setFont(font);
 
-    font.setFamily("Times New Roman");
-    pOkBtn = new QPushButton("YES");
-    pCelBtn = new QPushButton("NO");
-    pOkBtn->setFont(font);
-    pCelBtn->setFont(font);
-    pCelBtn->setStyleSheet("background-color: red;");
-    pOkBtn->setEnabled(false);
-    pCelBtn->setEnabled(false);
+    okBtnptr = new QPushButton("确定");
+    celBtnptr = new QPushButton("取消");
+    okBtnptr->setFont(font);
+    celBtnptr->setFont(font);
+    celBtnptr->setStyleSheet("background-color: red;");
+    okBtnptr->setEnabled(false);
+    okBtnptr->setEnabled(false);
 
-    connect(pOkBtn, &QPushButton::clicked, [&]() {
+    connect(okBtnptr, &QPushButton::clicked, [&]() {
         emit haveDownSignal(m_type, 1);
-        });
-    connect(pCelBtn, &QPushButton::clicked, [&]() {
+    });
+    connect(celBtnptr, &QPushButton::clicked, [&]() {
         emit haveDownSignal(m_type, 0);
-        });
+    });
 
-    pLayout = new QGridLayout;
-    pLayout->addWidget(pText, 0, 0, 1, 2);
-    pLayout->addWidget(pLabel, 1, 0, 1, 2);
-    pLayout->addWidget(pOkBtn, 2, 0, 1, 1);
-    pLayout->addWidget(pCelBtn, 2, 1, 1, 1);
-    setLayout(pLayout);
-
-    /*
-    QString style =
-        "CInfoArea { "
-        "    border: none; "
-        "    border-radius: 10px; "
-        "    background-color: #FFECB3;"
-        "}";
-    */
-    QString style = "CInfoArea {border: 1px solid #E64A19; border-radius: 10px}";
-    setStyleSheet(style);
+    layoutptr = new QGridLayout;
+    layoutptr->addWidget(textptr, 0, 0, 1, 2);
+    layoutptr->addWidget(contentptr, 1, 0, 1, 2);
+    layoutptr->addWidget(okBtnptr, 2, 0, 1, 1);
+    layoutptr->addWidget(celBtnptr, 2, 1, 1, 1);
+    
+    frameptr = new QFrame;
+    frameptr->setLayout(layoutptr);
+    frameptr->setStyleSheet(CINFOAREA_STYLE);
 }
 
-void CInfoArea::showInfo(const QString& str)
+QWidget* CInfoArea::getWidget() const
 {
-    pLabel->setText(str);
+    return frameptr;
+}
+
+bool CInfoArea::getEnabled() const
+{
+    return m_type != -1;
 }
 
 void CInfoArea::setType(const int& type, const QString& name)
 {
     m_type = type;
     if (type == -1) {
-        pLabel->setText("");
-        pOkBtn->setEnabled(false);
-        pCelBtn->setEnabled(false);
+        contentptr->setText("");
+        okBtnptr->setEnabled(false);
+        celBtnptr->setEnabled(false);
     }
     if (type == 0) {
-        pLabel->setText("是否购买「" + name + "」?");
-        pOkBtn->setEnabled(true);
-        pCelBtn->setEnabled(true);
+        contentptr->setText("是否购买「" + name + "」?");
+        okBtnptr->setEnabled(true);
+        celBtnptr->setEnabled(true);
     }
     else if (type == 1) {
-        pLabel->setText("是否为「" + name + "」\n建造一栋房子?");
-        pOkBtn->setEnabled(true);
-        pCelBtn->setEnabled(true);
+        contentptr->setText("是否为「" + name + "」\n建造一栋房子?");
+        okBtnptr->setEnabled(true);
+        celBtnptr->setEnabled(true);
+    }
+    else if (type == 2) {
+        contentptr->setText("请将余额还清（抵押、出售）！");
+        okBtnptr->setEnabled(true);
+        celBtnptr->setEnabled(false);
     }
     else if (type >= 10) {
-        pLabel->setText("你需要向「" + name + "」\n缴纳过路费" + QString::number(type));
-        pOkBtn->setEnabled(true);
-        pCelBtn->setEnabled(false);
+        contentptr->setText("你需要向「" + name + "」\n缴纳过路费" + QString::number(type));
+        okBtnptr->setEnabled(true);
+        celBtnptr->setEnabled(false);
     }
 }
 
 void CInfoArea::clear()
 {
-    //clear();
-
     QLayoutItem* child = nullptr;
-    while ((child = this->pLayout->takeAt(0)) != nullptr) {
+    while ((child = layoutptr->takeAt(0)) != nullptr) {
         if (child->widget() != nullptr) {
             child->widget()->setParent(nullptr);
         }
